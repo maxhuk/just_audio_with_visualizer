@@ -435,9 +435,6 @@ typedef struct JATapStorage {
 }
 
 static void initTap(MTAudioProcessingTapRef tap, void *clientInfo, void **tapStorageOut) {
-    if (!_visualizerEnableWaveform && !_visualizerEnableFft) {
-        return;
-    }
     JATapStorage *storage = calloc(1, sizeof(JATapStorage));
     AudioPlayer *self = (__bridge AudioPlayer *)clientInfo;
     storage->self = clientInfo;
@@ -448,9 +445,6 @@ static void initTap(MTAudioProcessingTapRef tap, void *clientInfo, void **tapSto
 }
 
 static void prepareTap(MTAudioProcessingTapRef tap, CMItemCount maxFrames, const AudioStreamBasicDescription *processingFormat) {
-    if (!_visualizerEnableWaveform && !_visualizerEnableFft) {
-        return;
-    }
     JATapStorage *storage = (JATapStorage *)MTAudioProcessingTapGetStorage(tap);
     storage->samplingRate = processingFormat->mSampleRate;
     //NSLog(@"samplingRate: %d", (int)(storage->samplingRate));
@@ -459,15 +453,17 @@ static void prepareTap(MTAudioProcessingTapRef tap, CMItemCount maxFrames, const
 }
 
 static void processTap(MTAudioProcessingTapRef tap, CMItemCount frameCount, MTAudioProcessingTapFlags flags, AudioBufferList *bufferListInOut, CMItemCount *frameCountOut, MTAudioProcessingTapFlags *flagsOut) {
-    if (!_visualizerEnableWaveform && !_visualizerEnableFft) {
-        return;
-    }
     OSStatus err = MTAudioProcessingTapGetSourceAudio(tap, frameCount, bufferListInOut, flagsOut, NULL, frameCountOut);
     if (err) {
         NSLog(@"Failed to get source audio");
         return;
     }
     JATapStorage *storage = (JATapStorage *)MTAudioProcessingTapGetStorage(tap);
+    if (storage == NULL || storage->self == NULL) {
+        NSLog(@"Already released");
+        return;
+    }
+
     long long now = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
 
     UInt8 *waveform = (UInt8 *)storage->waveform;
@@ -510,9 +506,6 @@ static void unprepareTap(MTAudioProcessingTapRef tap) {
 }
 
 static void finalizeTap(MTAudioProcessingTapRef tap) {
-    if (!_visualizerEnableWaveform && !_visualizerEnableFft) {
-        return;
-    }
     JATapStorage *storage = (JATapStorage *)MTAudioProcessingTapGetStorage(tap);
     storage->self = NULL;
     free(storage->waveform);
