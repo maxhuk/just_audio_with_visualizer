@@ -229,7 +229,7 @@ class MethodChannelAudioPlayer extends AudioPlayerPlatform {
   Future<StopVisualizerResponse> stopVisualizer(
       StopVisualizerRequest request) async {
     return StopVisualizerResponse.fromMap(
-        (await _channel.invokeMethod('stopVisualizer', request.toMap()))!);
+        (await _channel.invokeMethod<Map<dynamic, dynamic>>('stopVisualizer', request.toMap()))!);
   }
 
   @override
